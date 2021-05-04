@@ -1,0 +1,108 @@
+#!/bin/bash
+
+set -eu
+
+cmpld_dir="$HOME/.cmpld"
+
+if [ $# -lt 1 ]; then
+  echo "expected at least one argument. exiting"
+  exit 1
+fi
+
+if [ "$1" == "--help" ]; then
+  echo "here should be a helpful message"
+  exit 0
+fi
+
+source_original="$1"
+if [ ! -f "$source_original" ]; then
+  echo "expected existing file as first argument. exiting"
+  exit 2
+fi
+
+hash=$(sha256sum "$source_original" | cut -d' ' -f1)
+export build_dir="$cmpld_dir/hashed/$hash"
+if [ ! -f "$build_dir" ]; then
+  mkdir -p "$build_dir"
+fi
+
+source_name=$(basename "$source_original")
+export source="$build_dir/$source_name"
+if [ ! -f "$source" ]; then
+  # remove lines from the beginning of the file while they start with '#'
+  sed '/^[^#]\|^$/,$!d' "$source_original" >"$source"
+fi
+
+run="$build_dir/run"
+run_file_content=''
+if [ ! -f "$run" ]; then # we need to compile
+  original_pwd=$(pwd)
+
+  export source_extension="${source_name##*.}"
+  export source_basename="${source_name%.*}"
+
+  if [ -f "$cmpld_dir/compile/$source_extension" ]; then # compile script found
+    compile="$cmpld_dir/compile/$source_extension \"\$source\""
+  else # no compile script found
+    compile=""
+    case "$source_extension" in
+    "c")
+      if command -v "gcc" &>/dev/null; then
+        compile='gcc -o run "$source"'
+      elif command -v "clang" &>/dev/null; then
+        compile='clang -o run "$source"'
+      fi
+      ;;
+    "java")
+      if command -v "javac" &>/dev/null; then
+        compile='javac "$source"'
+        run_file_content="#!$(which sh)
+
+java -cp \"$build_dir\" $source_basename \$@"
+      fi
+      ;;
+    "scala")
+      if command -v "sbt" &>/dev/null; then
+        if command -v "clang" &>/dev/null; then
+          # use scala native
+          compile='sbt new scala-native/scala-native.g8 --name=a
+cd a
+rm src/main/scala/Main.scala
+cp $source src/main/scala/
+sbt "set nativeMode := \"release-fast\"; nativeLink"
+ln "$build_dir/a/target/scala-2.13/a-out" ../run'
+        else
+          # use sbt+scalac
+          echo "not implemented!"
+          exit 4
+        fi
+      elif command -v "scalac" &>/dev/null; then
+        # use scalac
+        compile='scalac $source'
+        run_file_content="#!$(which sh)
+
+scala -cp \"$build_dir\" $source_basename \$@"
+      fi
+      ;;
+    esac
+  fi
+
+  if [ -z "$compile" ]; then
+    echo "I do not know how to compile $source_extension files. exiting"
+    cd "$original_pwd"
+    exit 3
+  fi
+
+  cd "$build_dir"
+  bash -c "$compile" >/dev/null
+  if [ -n "$run_file_content" ]; then
+    echo "$run_file_content" >"$run"
+    chmod +x run
+  fi
+
+  cd "$original_pwd"
+fi
+
+
+$run "${@:2}"
+
