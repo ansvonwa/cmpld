@@ -60,6 +60,11 @@ if [ ! -f "$run" ]; then # we need to compile
         compile='clang -o run "$source"'
       fi
       ;;
+    "rs")
+      if command -v "rustc" &>/dev/null; then
+        compile='rustc -o run "$source"'
+      fi
+      ;;
     "java")
       if command -v "javac" &>/dev/null; then
         compile='javac "$source"'
