@@ -75,10 +75,16 @@ if [ ! -f "$run" ]; then # we need to compile
       ;;
     "java")
       if command -v "javac" &>/dev/null; then
-        compile='javac "$source"'
-        run_file_content="#!$(which sh)
+        if command -v "native-image" &>/dev/null; then
+          compile='javac "$source"
+native-image $source_basename
+mv $source_basename run'
+        else
+          compile='javac "$source"'
+          run_file_content="#!$(which sh)
 
 java -cp \"$build_dir\" $source_basename \$@"
+        fi
       fi
       ;;
     "scala")
