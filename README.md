@@ -11,7 +11,7 @@ Put the cmpld script in `/bin/` and make it executable (`chmod +x /bin/cmpld`).
 ## Usage
 Prepend `#!/bin/cmpld` to your source.
 
-Currently, compilation is only built-in for `.c`, `.java`, `.rs` and `.scala` files, but you can always put a script to `~/.cmpld/compile/<fileextension>` that takes the source file as first argument and creates an executable file `run`.
+Currently, compilation is only built-in for `.c`, `.java`, `.rs`, `.go` and `.scala` files, but you can always put a script to `~/.cmpld/compile/<fileextension>` that takes the source file as first argument and creates an executable file `run`.
 
 
 ## Example

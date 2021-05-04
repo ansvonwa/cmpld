@@ -65,6 +65,14 @@ if [ ! -f "$run" ]; then # we need to compile
         compile='rustc -o run "$source"'
       fi
       ;;
+    "go")
+      if command -v "go" &>/dev/null; then
+        # Note that go prints to stderr even if everything is fine.
+        # So it will either fail silently (if not in --debug mode)
+        # or succeed loundly. We take the former variant.
+        compile='go mod init a/a 2>&1 && go build -o run 2>&1'
+      fi
+      ;;
     "java")
       if command -v "javac" &>/dev/null; then
         compile='javac "$source"'
