@@ -14,6 +14,13 @@ if [ "$1" == "--help" ]; then
   exit 0
 fi
 
+if [ $# -ge 2 ] && [ "$1" == "--debug" ]; then
+  debug=true
+  shift
+else
+  debug=false
+fi
+
 source_original="$1"
 if [ ! -f "$source_original" ]; then
   echo "expected existing file as first argument. exiting"
@@ -94,8 +101,16 @@ scala -cp \"$build_dir\" $source_basename \$@"
   fi
 
   cd "$build_dir"
-  bash -c "$compile" >/dev/null
+  if [ $debug == true ]; then
+    echo "bash -c \"$compile\"" | sed 's/^/[compilation] /'
+    bash -c "$compile"
+  else
+    bash -c "$compile" >/dev/null
+  fi
   if [ -n "$run_file_content" ]; then
+    if [ $debug == true ]; then
+      echo "set content of runfile:\n$run_file_content" | sed 's/^/[runfile] /'
+    fi
     echo "$run_file_content" >"$run"
     chmod +x run
   fi
@@ -103,6 +118,8 @@ scala -cp \"$build_dir\" $source_basename \$@"
   cd "$original_pwd"
 fi
 
-
+if [ $debug == true ]; then
+  echo "$run \"${*:2}\"" | sed 's/^/[run] /'
+fi
 $run "${@:2}"
 
