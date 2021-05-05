@@ -33,13 +33,13 @@ public class test {
 $ time ./test.java WORLD
 Hello WORLD!
 
-real	0m0,836s
-user	0m2,063s
-sys	0m0,219s
+real	0m29,159s
+user	4m1,618s
+sys	0m9,748s
 $ time ./test.java WORLD
 Hello WORLD!
 
-real	0m0,125s
-user	0m0,133s
-sys	0m0,049s
+real	0m0,012s
+user	0m0,006s
+sys	0m0,006s
 ```
